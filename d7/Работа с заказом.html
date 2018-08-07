@@ -1,0 +1,201 @@
+<div class="post-content">
+<div itemprop="articleBody">
+<p>Начиная с 16 версии используется новая версия ядра магазина Битрикс, являющаяся частью ядра Битрикс D7. Многое описанное здесь может работать и в переходной версии 15.5. Все классы для работы с магазином собраны в модуле sale, поэтому для работы примером используем use для пространства модуля интернет-магазина.</p>
+<pre><code class="language-php hljs "><span class="hljs-keyword">use</span> <span class="hljs-title">Bitrix</span>\<span class="hljs-title">Sale</span>;</code></pre>
+<h2>Заказ (Sale\Order)</h2>
+<p>Заказ представляет собой объект класса Bitrix\Sale\Order. Нужно запомнить, что пока не вызван метод save() этот объект необязательно связан с сохранённым заказом. Также пока вы не вызовете save(), изменения в заказе не будут сохранены в базе данных.</p>
+<p>Существующий заказ можно получить следующим образом:</p>
+<pre><code class=" hljs php"><span class="hljs-comment">/** int $orderId ID заказа */</span>
+<span class="hljs-variable">$order</span> = Sale\Order::load(<span class="hljs-variable">$orderId</span>);
+
+<span class="hljs-comment">/** mixed $orderNumber номер заказа */</span>
+<span class="hljs-variable">$order</span> = Sale\Order::loadByAccountNumber(<span class="hljs-variable">$orderNumber</span>);</code></pre>
+<p>Поля заказа можно получить короткими вызовами:</p>
+<pre><code class=" hljs php"><span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;getId</span>(); <span class="hljs-comment">// ID заказа</span>
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;getSiteId</span>(); <span class="hljs-comment">// ID сайта</span>
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;getDateInsert</span>(); <span class="hljs-comment">// объект Bitrix\Main\Type\DateTime</span>
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;getPersonTypeId</span>(); <span class="hljs-comment">// ID типа покупателя</span>
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;getUserId</span>(); <span class="hljs-comment">// ID пользователя</span>
+
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;getPrice</span>(); <span class="hljs-comment">// Сумма заказа</span>
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;getDiscountPrice</span>(); <span class="hljs-comment">// Размер скидки</span>
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;getDeliveryPrice</span>(); <span class="hljs-comment">// Стоимость доставки</span>
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;getSumPaid</span>(); <span class="hljs-comment">// Оплаченная сумма</span>
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;getCurrency</span>(); <span class="hljs-comment">// Валюта заказа</span>
+
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;isPaid</span>(); <span class="hljs-comment">// true, если оплачен</span>
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;isAllowDelivery</span>(); <span class="hljs-comment">// true, если разрешена доставка</span>
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;isShipped</span>(); <span class="hljs-comment">// true, если отправлен</span>
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;isCanceled</span>(); <span class="hljs-comment">// true, если отменен</span></code></pre>
+<p>Также любое поле по имени можно получить так:</p>
+<pre><code class=" hljs php"><span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;getField</span>(<span class="hljs-string">"ORDER_WEIGHT"</span>); <span class="hljs-comment">// Вес заказа</span>
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;getField</span>(<span class="hljs-string">'PRICE'</span>); <span class="hljs-comment">// Сумма заказа</span>
+<span class="hljs-comment">// Изменение поля:</span>
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;setField</span>(<span class="hljs-string">'USER_DESCRIPTION'</span>, <span class="hljs-string">'Комментарий к заказу'</span>);
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;save</span>();</code></pre>
+<p>Список доступных полей можно получить, вызвав $order-&gt;getAvailableFields().</p>
+<p>Заказ имеет связь один-ко-многим с несколькими объектами в виде коллекций - коллекция товаров в корзине (Sale\Basket), коллекция отгрузок (Sale\ShipmentCollection), коллекция оплат (Sale\PaymentCollection) и коллекция свойств заказа (Sale\PropertyValueCollection).</p>
+<p>Самый простой способ получить список способов доставки и оплаты - короткие вызовы:</p>
+<pre><code class=" hljs php"><span class="hljs-variable">$paymentIds</span> = <span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;getPaymentSystemId</span>(); <span class="hljs-comment">// массив id способов оплат</span>
+<span class="hljs-variable">$deliveryIds</span> = <span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;getDeliverySystemId</span>(); <span class="hljs-comment">// массив id способов доставки</span></code></pre>
+<p>Чтобы получить список примененных к заказу скидок, нужно вызвать:</p>
+<pre><code class=" hljs php"><span class="hljs-variable">$discountData</span> = <span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;getDiscount</span>()<span class="hljs-variable">-&gt;getApplyResult</span>();</code></pre>
+<p>В массиве $discountData['DISCOUNT_LIST'] содержится список скидок, в $discountData['COUPON_LIST'] содержится список купонов. Т.к. скидки можно отключать в админке, следует проверять поле APPLY: если Y - скидка/купон применёны, если N - были отключены менеджером.</p>
+<h2>Корзина заказа (Sale\Basket)</h2>
+<p>Про работу с корзиной была <a href="/blog/post/work-with-basket-bitrix-d7">отдельная статья</a>, привязать и получить корзину заказа можно так:</p>
+<pre><code class=" hljs php"><span class="hljs-comment">/** Sale\Basket $basket */</span>
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;setBasket</span>(<span class="hljs-variable">$basket</span>);
+
+<span class="hljs-variable">$basket</span> = <span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;getBasket</span>();</code></pre>
+
+<h2>Свойства заказа (Sale\PropertyValueCollection)</h2>
+<p>Свойства заказа - объекты Bitrix\Sale\PropertyValue - собраны в коллекции propertyCollection</p>
+<pre><code class=" hljs php"><span class="hljs-variable">$propertyCollection</span> = <span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;getPropertyCollection</span>();</code></pre>
+<p>Получить значения всех свойств и группы свойств можно так:</p>
+<pre><code class=" hljs php"><span class="hljs-variable">$ar</span> = <span class="hljs-variable">$propertyCollection</span><span class="hljs-variable">-&gt;getArray</span>(); <span class="hljs-comment">// массив ['properties' =&gt; [..], 'groups' =&gt; [..] ];</span>
+<span class="hljs-variable">$ar</span> = <span class="hljs-variable">$propertyCollection</span><span class="hljs-variable">-&gt;getGroups</span>(); <span class="hljs-comment">// массив групп</span>
+<span class="hljs-variable">$ar</span> = <span class="hljs-variable">$propertyCollection</span><span class="hljs-variable">-&gt;getGroupProperties</span>(<span class="hljs-variable">$groupId</span>); <span class="hljs-comment">// массив свойств, относящихся к группе</span></code></pre>
+<p>У многих свойств заказа есть определенное встроенное назначение (атрибуты IS_EMAIL, IS_PAYER, IS_LOCATION, IS_LOCATION4TAX, IS_PROFILE_NAME, IS_ZIP, IS_PHONE, IS_ADDRESS). Такие свойства можно получить следующими методами:</p>
+<pre><code class=" hljs php"><span class="hljs-variable">$emailPropValue</span> = <span class="hljs-variable">$propertyCollection</span><span class="hljs-variable">-&gt;getUserEmail</span>();
+<span class="hljs-variable">$namePropValue</span>  = <span class="hljs-variable">$propertyCollection</span><span class="hljs-variable">-&gt;getPayerName</span>();
+<span class="hljs-variable">$locPropValue</span>   = <span class="hljs-variable">$propertyCollection</span><span class="hljs-variable">-&gt;getDeliveryLocation</span>();
+<span class="hljs-variable">$taxLocPropValue</span> = <span class="hljs-variable">$propertyCollection</span><span class="hljs-variable">-&gt;getTaxLocation</span>();
+<span class="hljs-variable">$profNamePropVal</span> = <span class="hljs-variable">$propertyCollection</span><span class="hljs-variable">-&gt;getProfileName</span>();
+<span class="hljs-variable">$zipPropValue</span>   = <span class="hljs-variable">$propertyCollection</span><span class="hljs-variable">-&gt;getDeliveryLocationZip</span>();
+<span class="hljs-variable">$phonePropValue</span> = <span class="hljs-variable">$propertyCollection</span><span class="hljs-variable">-&gt;getPhone</span>();
+<span class="hljs-variable">$addrPropValue</span>  = <span class="hljs-variable">$propertyCollection</span><span class="hljs-variable">-&gt;getAddress</span>();</code></pre>
+<p>Получить значение свойства по ID:</p>
+<pre><code class=" hljs php"><span class="hljs-variable">$somePropValue</span> = <span class="hljs-variable">$propertyCollection</span><span class="hljs-variable">-&gt;getItemByOrderPropertyId</span>(<span class="hljs-variable">$orderPropertyId</span>);</code></pre>
+<p>В любом случае получаем значение свойства - экземпляр класса <strong>Bitrix\Sale\PropertyValue</strong>. Из него мы можем получить значение свойства:</p>
+<pre><code class=" hljs php"><span class="hljs-variable">$somePropValue</span><span class="hljs-variable">-&gt;getValue</span>(); <span class="hljs-comment">// значение свойства</span>
+<span class="hljs-variable">$somePropValue</span><span class="hljs-variable">-&gt;getViewHtml</span>(); <span class="hljs-comment">// представление значения в читаемом виде (напр. для местоположения - путь страна, регион, город)</span></code></pre>
+<p>И информацию о самом свойстве:</p>
+<pre><code class=" hljs php"><span class="hljs-variable">$arProp</span>  = <span class="hljs-variable">$somePropValue</span><span class="hljs-variable">-&gt;getProperty</span>(); <span class="hljs-comment">// массив данных о самом свойстве</span>
+<span class="hljs-variable">$propId</span>  = <span class="hljs-variable">$somePropValue</span><span class="hljs-variable">-&gt;getPropertyId</span>(); <span class="hljs-comment">// ID свойства</span>
+<span class="hljs-variable">$propName</span> = <span class="hljs-variable">$somePropValue</span><span class="hljs-variable">-&gt;getName</span>(); <span class="hljs-comment">// Название</span>
+<span class="hljs-variable">$isRequired</span> = <span class="hljs-variable">$somePropValue</span><span class="hljs-variable">-&gt;isRequired</span>(); <span class="hljs-comment">// true, если свойство обязательное</span>
+<span class="hljs-variable">$propPerson</span> = <span class="hljs-variable">$somePropValue</span><span class="hljs-variable">-&gt;getPersonTypeId</span>(); <span class="hljs-comment">// Тип плательщика</span>
+<span class="hljs-variable">$propGroup</span>  = <span class="hljs-variable">$somePropValue</span><span class="hljs-variable">-&gt;getGroupId</span>(); <span class="hljs-comment">// ID группы</span></code></pre>
+<p>Чтобы изменить значение свойства следует вызвать метод setValue и сохранить сущность</p>
+<pre><code class=" hljs php"><span class="hljs-variable">$somePropValue</span><span class="hljs-variable">-&gt;setValue</span>(<span class="hljs-string">"value"</span>);
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;save</span>(); 
+<span class="hljs-comment">// можно $somePropValue-&gt;save(), но пересчета заказа не произойдёт</span></code></pre>
+
+<h2>Оплаты заказа (Sale\PaymentCollection)</h2>
+<pre><code class=" hljs php"><span class="hljs-variable">$paymentCollection</span> = <span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;getPaymentCollection</span>();</code></pre>
+<p>Из коллекции оплат также можно получить информацию об оплате, что и из объекта заказа. Оплата с внутреннего счета также считается одной из оплат:</p>
+<pre><code class=" hljs php"><span class="hljs-variable">$paymentCollection</span><span class="hljs-variable">-&gt;isPaid</span>(); <span class="hljs-comment">// true, если все оплаты оплачены</span>
+<span class="hljs-variable">$paymentCollection</span><span class="hljs-variable">-&gt;hasPaidPayment</span>(); <span class="hljs-comment">// true, если хотя бы одна оплата оплачена</span>
+<span class="hljs-variable">$paymentCollection</span><span class="hljs-variable">-&gt;getPaidSum</span>(); <span class="hljs-comment">// оплаченная сумма</span>
+<span class="hljs-variable">$paymentCollection</span><span class="hljs-variable">-&gt;isExistsInnerPayment</span>(); <span class="hljs-comment">// true, если осуществлена оплата с внутреннего счета</span></code></pre>
+<p>Коллекция содержит объекты оплаты <strong>Sale\Payment</strong> с информацией об оплатах:</p>
+<pre><code class=" hljs php"><span class="hljs-keyword">foreach</span> (<span class="hljs-variable">$paymentCollection</span> <span class="hljs-keyword">as</span> <span class="hljs-variable">$payment</span>) {
+    <span class="hljs-variable">$sum</span> = <span class="hljs-variable">$payment</span><span class="hljs-variable">-&gt;getSum</span>(); <span class="hljs-comment">// сумма к оплате</span>
+    <span class="hljs-variable">$isPaid</span> = <span class="hljs-variable">$payment</span><span class="hljs-variable">-&gt;isPaid</span>(); <span class="hljs-comment">// true, если оплачена</span>
+    <span class="hljs-variable">$isReturned</span> = <span class="hljs-variable">$payment</span><span class="hljs-variable">-&gt;isReturn</span>(); <span class="hljs-comment">// true, если возвращена</span>
+
+    <span class="hljs-variable">$ps</span> = <span class="hljs-variable">$payment</span><span class="hljs-variable">-&gt;getPaySystem</span>(); <span class="hljs-comment">// платежная система (объект Sale\PaySystem\Service)</span>
+    <span class="hljs-variable">$psID</span> = <span class="hljs-variable">$payment</span><span class="hljs-variable">-&gt;getPaymentSystemId</span>(); <span class="hljs-comment">// ID платежной системы</span>
+    <span class="hljs-variable">$psName</span> = <span class="hljs-variable">$payment</span><span class="hljs-variable">-&gt;getPaymentSystemName</span>(); <span class="hljs-comment">// название платежной системы</span>
+    <span class="hljs-variable">$isInnerPs</span> = <span class="hljs-variable">$payment</span><span class="hljs-variable">-&gt;isInner</span>(); <span class="hljs-comment">// true, если это оплата с внутреннего счета</span>
+}</code></pre>
+<p>Оплатить или вернуть оплату можно методами setPaid(), setReturn():</p>
+<pre><code class=" hljs php"><span class="hljs-variable">$onePayment</span> = <span class="hljs-variable">$paymentCollection</span>[<span class="hljs-number">0</span>];
+<span class="hljs-variable">$onePayment</span><span class="hljs-variable">-&gt;setPaid</span>(<span class="hljs-string">"N"</span>); <span class="hljs-comment">// отмена оплаты</span>
+<span class="hljs-variable">$onePayment</span><span class="hljs-variable">-&gt;setPaid</span>(<span class="hljs-string">"Y"</span>); <span class="hljs-comment">// оплата</span>
+<span class="hljs-variable">$onePayment</span><span class="hljs-variable">-&gt;setReturn</span>(<span class="hljs-string">"Y"</span>); <span class="hljs-comment">// возврат (деньги возвращаются на внутренний счет или в платежную систему, если обработчик реализует интерфейс Sale\PaySystem\IRefund)</span>
+<span class="hljs-comment">// после любых действий нужно сохранить сущность:</span>
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;save</span>();</code></pre>
+<p>Инициировать оплату (вывести шаблон оплаты: форму, кнопку и т.п.) можно следующим образом:</p>
+<pre><code class=" hljs php"><span class="hljs-variable">$service</span> = Sale\PaySystem\Manager::getObjectById(<span class="hljs-variable">$onePayment</span><span class="hljs-variable">-&gt;getPaymentSystemId</span>());
+<span class="hljs-variable">$context</span> = \Bitrix\Main\Application::getInstance()<span class="hljs-variable">-&gt;getContext</span>();
+<span class="hljs-variable">$service</span><span class="hljs-variable">-&gt;initiatePay</span>(<span class="hljs-variable">$onePayment</span>, <span class="hljs-variable">$context</span><span class="hljs-variable">-&gt;getRequest</span>());</code></pre>
+<h2>Пример оформления заказа в D7</h2>
+<p>Для примера приведу простейший код оформления заказа с комментариями</p>
+<pre><code class="language-php hljs "><span class="hljs-keyword">use</span> <span class="hljs-title">Bitrix</span>\<span class="hljs-title">Main</span>\<span class="hljs-title">Context</span>,
+    <span class="hljs-title">Bitrix</span>\<span class="hljs-title">Currency</span>\<span class="hljs-title">CurrencyManager</span>,
+    <span class="hljs-title">Bitrix</span>\<span class="hljs-title">Sale</span>\<span class="hljs-title">Order</span>,
+    <span class="hljs-title">Bitrix</span>\<span class="hljs-title">Sale</span>\<span class="hljs-title">Basket</span>,
+    <span class="hljs-title">Bitrix</span>\<span class="hljs-title">Sale</span>\<span class="hljs-title">Delivery</span>,
+    <span class="hljs-title">Bitrix</span>\<span class="hljs-title">Sale</span>\<span class="hljs-title">PaySystem</span>;
+
+<span class="hljs-keyword">global</span> <span class="hljs-variable">$USER</span>;
+
+Bitrix\Main\Loader::includeModule(<span class="hljs-string">"sale"</span>);
+Bitrix\Main\Loader::includeModule(<span class="hljs-string">"catalog"</span>);
+
+<span class="hljs-comment">// Допустим некоторые поля приходит в запросе</span>
+<span class="hljs-variable">$request</span> = Context::getCurrent()<span class="hljs-variable">-&gt;getRequest</span>();
+<span class="hljs-variable">$productId</span> = <span class="hljs-variable">$request</span>[<span class="hljs-string">"PRODUCT_ID"</span>];
+<span class="hljs-variable">$phone</span> = <span class="hljs-variable">$request</span>[<span class="hljs-string">"PHONE"</span>];
+<span class="hljs-variable">$name</span> = <span class="hljs-variable">$request</span>[<span class="hljs-string">"NAME"</span>];
+<span class="hljs-variable">$comment</span> = <span class="hljs-variable">$request</span>[<span class="hljs-string">"COMMENT"</span>];
+
+<span class="hljs-variable">$siteId</span> = Context::getCurrent()<span class="hljs-variable">-&gt;getSite</span>();
+<span class="hljs-variable">$currencyCode</span> = CurrencyManager::getBaseCurrency();
+
+<span class="hljs-comment">// Создаёт новый заказ</span>
+<span class="hljs-variable">$order</span> = Order::create(<span class="hljs-variable">$siteId</span>, <span class="hljs-variable">$USER</span><span class="hljs-variable">-&gt;isAuthorized</span>() ? <span class="hljs-variable">$USER</span><span class="hljs-variable">-&gt;GetID</span>() : <span class="hljs-number">539</span>);
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;setPersonTypeId</span>(<span class="hljs-number">1</span>);
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;setField</span>(<span class="hljs-string">'CURRENCY'</span>, <span class="hljs-variable">$currencyCode</span>);
+<span class="hljs-keyword">if</span> (<span class="hljs-variable">$comment</span>) {
+    <span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;setField</span>(<span class="hljs-string">'USER_DESCRIPTION'</span>, <span class="hljs-variable">$comment</span>); <span class="hljs-comment">// Устанавливаем поля комментария покупателя</span>
+}
+
+<span class="hljs-comment">// Создаём корзину с одним товаром</span>
+<span class="hljs-variable">$basket</span> = Basket::create(<span class="hljs-variable">$siteId</span>);
+<span class="hljs-variable">$item</span> = <span class="hljs-variable">$basket</span><span class="hljs-variable">-&gt;createItem</span>(<span class="hljs-string">'catalog'</span>, <span class="hljs-variable">$productId</span>);
+<span class="hljs-variable">$item</span><span class="hljs-variable">-&gt;setFields</span>(<span class="hljs-keyword">array</span>(
+    <span class="hljs-string">'QUANTITY'</span> =&gt; <span class="hljs-number">1</span>,
+    <span class="hljs-string">'CURRENCY'</span> =&gt; <span class="hljs-variable">$currencyCode</span>,
+    <span class="hljs-string">'LID'</span> =&gt; <span class="hljs-variable">$siteId</span>,
+    <span class="hljs-string">'PRODUCT_PROVIDER_CLASS'</span> =&gt; <span class="hljs-string">'\CCatalogProductProvider'</span>,
+));
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;setBasket</span>(<span class="hljs-variable">$basket</span>);
+
+<span class="hljs-comment">// Создаём одну отгрузку и устанавливаем способ доставки - "Без доставки" (он служебный)</span>
+<span class="hljs-variable">$shipmentCollection</span> = <span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;getShipmentCollection</span>();
+<span class="hljs-variable">$shipment</span> = <span class="hljs-variable">$shipmentCollection</span><span class="hljs-variable">-&gt;createItem</span>();
+<span class="hljs-variable">$service</span> = Delivery\Services\Manager::getById(Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId());
+<span class="hljs-variable">$shipment</span><span class="hljs-variable">-&gt;setFields</span>(<span class="hljs-keyword">array</span>(
+    <span class="hljs-string">'DELIVERY_ID'</span> =&gt; <span class="hljs-variable">$service</span>[<span class="hljs-string">'ID'</span>],
+    <span class="hljs-string">'DELIVERY_NAME'</span> =&gt; <span class="hljs-variable">$service</span>[<span class="hljs-string">'NAME'</span>],
+));
+<span class="hljs-variable">$shipmentItemCollection</span> = <span class="hljs-variable">$shipment</span><span class="hljs-variable">-&gt;getShipmentItemCollection</span>();
+<span class="hljs-variable">$shipmentItem</span> = <span class="hljs-variable">$shipmentItemCollection</span><span class="hljs-variable">-&gt;createItem</span>(<span class="hljs-variable">$item</span>);
+<span class="hljs-variable">$shipmentItem</span><span class="hljs-variable">-&gt;setQuantity</span>(<span class="hljs-variable">$item</span><span class="hljs-variable">-&gt;getQuantity</span>());
+
+<span class="hljs-comment">// Создаём оплату со способом #1</span>
+<span class="hljs-variable">$paymentCollection</span> = <span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;getPaymentCollection</span>();
+<span class="hljs-variable">$payment</span> = <span class="hljs-variable">$paymentCollection</span><span class="hljs-variable">-&gt;createItem</span>();
+<span class="hljs-variable">$paySystemService</span> = PaySystem\Manager::getObjectById(<span class="hljs-number">1</span>);
+<span class="hljs-variable">$payment</span><span class="hljs-variable">-&gt;setFields</span>(<span class="hljs-keyword">array</span>(
+    <span class="hljs-string">'PAY_SYSTEM_ID'</span> =&gt; <span class="hljs-variable">$paySystemService</span><span class="hljs-variable">-&gt;getField</span>(<span class="hljs-string">"PAY_SYSTEM_ID"</span>),
+    <span class="hljs-string">'PAY_SYSTEM_NAME'</span> =&gt; <span class="hljs-variable">$paySystemService</span><span class="hljs-variable">-&gt;getField</span>(<span class="hljs-string">"NAME"</span>),
+));
+
+<span class="hljs-comment">// Устанавливаем свойства</span>
+<span class="hljs-variable">$propertyCollection</span> = <span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;getPropertyCollection</span>();
+<span class="hljs-variable">$phoneProp</span> = <span class="hljs-variable">$propertyCollection</span><span class="hljs-variable">-&gt;getPhone</span>();
+<span class="hljs-variable">$phoneProp</span><span class="hljs-variable">-&gt;setValue</span>(<span class="hljs-variable">$phone</span>);
+<span class="hljs-variable">$nameProp</span> = <span class="hljs-variable">$propertyCollection</span><span class="hljs-variable">-&gt;getPayerName</span>();
+<span class="hljs-variable">$nameProp</span><span class="hljs-variable">-&gt;setValue</span>(<span class="hljs-variable">$name</span>);
+
+<span class="hljs-comment">// Сохраняем</span>
+<span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;doFinalAction</span>(<span class="hljs-keyword">true</span>);
+<span class="hljs-variable">$result</span> = <span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;save</span>();
+<span class="hljs-variable">$orderId</span> = <span class="hljs-variable">$order</span><span class="hljs-variable">-&gt;getId</span>();</code></pre>
+<p>Подробнее можно прочитать по <a href="https://github.com/SidiGi/bitrix-info/wiki/%D0%94%D0%BE%D0%B1%D0%B0%D0%B2%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5-%D0%B7%D0%B0%D0%BA%D0%B0%D0%B7%D0%B0-(d7)" target="_blank">этой ссылке</a> или в компоненте sale.order.ajax. Если у вас есть свои примеры – присылайте здесь в комментарии или на странице <a href="/chat/">чата</a>.</p>
+<hr>
+<p>Читайте также:</p>
+<ul>
+<li><a href="/blog/post/work-with-basket-bitrix-d7">Работа с корзиной в D7</a></li>
+</ul>
+<style>
+.subheader {
+    background: url("/storage/app/media/bg/basket-bg.jpg") #442D25;
+    background-size: cover;
+}
+</style>
+</div>
+</div>
