@@ -9,7 +9,7 @@
  $result['RESULT_PRICE']['UNROUND_DISCOUNT_PRICE'] = 1000;
  }
  */
-$eventManager = Bitrix\Main\EventManager::getInstance();
+$eventManager = Bitrix\Main\EventManager::getInstance(); 
 $eventManager->addEventHandler('catalog', 'OnGetOptimalPriceResult', function(&$result){
 	$result['PRICE']['PRICE'] = 1000;
 	$result['RESULT_PRICE']['DISCOUNT_PRICE'] = 1000;
